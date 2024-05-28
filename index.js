@@ -14,7 +14,7 @@ let foodPosition = null
 let direction = undefined
 let counter = 0
 let radio = 5
-let speed = 2
+let speed = 1
 const Snake = [
   {
     x: canvas.width / 2 - 10,
