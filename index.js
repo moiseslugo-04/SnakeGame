@@ -5,28 +5,30 @@ const buttons = document.querySelectorAll('.controls button')
 const btnAgain = document.querySelector('.options button')
 const modal = document.querySelector('.modal')
 const showScore = document.querySelector('.score span')
+// canvas measures
+canvas.width = 400
+canvas.height = 500
 
-let width = (canvas.width = 400)
-let height = (canvas.height = 500)
-let x = canvas.width / 2 - 10
-let y = canvas.height - 20
-let foodPosition, direction
-const snake = [{ x, y, width: 10, height: 10 }]
 let score = 0
-let speed = 1
+let foodPosition = null
+let direction = undefined
+let counter = 0
+let radio = 5
+let speed = 3
+const Snake = [
+  {
+    x: canvas.width / 2 - 10,
+    y: canvas.height - 20,
+    width: 10,
+    height: 10,
+  },
+]
 
-const controls = {
-  ArrowUp: { x: 0, y: -speed },
-  ArrowDown: { x: 0, y: speed },
-  ArrowLeft: { x: -speed, y: 0 },
-  ArrowRight: { x: speed, y: 0 },
-}
-
-//Snake drawing Function
+// <== drawing functions ==>
 function drawSnake() {
   ctx.clearRect(0, 0, canvas.width, canvas.height)
-  snake.forEach(({ x, y, width, height }) => {
-    ctx.fillStyle = '#b3fa0c'
+  Snake.forEach(({ x, y, width, height }, index) => {
+    ctx.fillStyle = '#5bd30b'
     ctx.fillRect(x, y, width, height)
   })
   if (foodPosition) {
@@ -39,102 +41,87 @@ function drawFood(x, y) {
     x = Math.floor(Math.random() * (canvas.width - 40)) + 15
     foodPosition = { x, y }
   }
-  ctx.fillStyle = '#06f0a2ab'
+  ctx.fillStyle = '#14fadbd7'
   ctx.beginPath()
   ctx.arc(x, y, 5, 0, Math.PI * 2)
   ctx.closePath()
   ctx.fill()
 }
-function growSnake() {
-  const newTail = { ...snake[snake.length - 1] }
-  if (direction === 'ArrowUp') newTail.y += 1
-  if (direction === 'ArrowDown') newTail.y -= 1
-  if (direction === 'ArrowLeft') newTail.x += 1
-  if (direction === 'ArrowRight') newTail.x -= 1
-  snake.push(newTail)
-}
-//Snake movement function
+// <== logical functions ==>
 function moveSnake() {
-  if (!controls[direction] || modal.style.display === 'flex')
-    return (direction = null)
-
-  const head = { ...snake[0] }
+  let controls = getControls(speed)
+  if (!controls[direction] || modal.style.display === 'flex') return
+  const head = { ...Snake[0] }
   head.x += controls[direction].x
   head.y += controls[direction].y
-  if (head.x < 0 || head.x >= canvas.width || head.y < 0 || head.y >= height) {
-    console.log('yes')
+  if (
+    head.x < 0 ||
+    head.x + head.width > canvas.width ||
+    head.y < 0 ||
+    head.y + head.width >= canvas.height
+  ) {
     return gameOver()
   }
-  for (let i = snake.length - 1; i > 0; i--) {
-    snake[i] = { ...snake[i - 1] }
+  for (let i = Snake.length - 1; i > 0; i--) {
+    Snake[i] = { ...Snake[i - 1] }
   }
-  snake[0] = head
-  if (foodPosition && detectFoodCollision(head, foodPosition)) {
-    score += 1
+  Snake[0] = head
+  if (foodPosition && detectCollisionFood(head, foodPosition)) {
+    growSnake()
+    score++
     showScore.textContent = score
     foodPosition = null
     drawFood()
-    growSnake()
-  }
-  if (detectSnakeCollision()) {
-    return gameOver()
   }
 }
-//detect Food collision
-function detectFoodCollision(snakeHead, food) {
-  const distX = Math.abs(snakeHead.x + snakeHead.width / 2 - food.x)
-  const distY = Math.abs(snakeHead.y + snakeHead.width / 2 - food.y)
-  const distance = Math.sqrt(distX * distX + distY * distY)
-  return distance < snakeHead.width / 2 + 5
+function growSnake() {
+  let tail = { ...Snake[Snake.length - 1] }
+  Snake.push(tail)
 }
-// detect Snake Collision
-function detectSnakeCollision() {
-  const head = snake[0]
-  for (let i = 1; i < snake.length; i++) {
-    if (head.x === snake[i].x && head.y === snake[i].y) {
-      return true
-    }
-  }
-  return false
-}
-if (detectSnakeCollision()) {
-  console.log('yes')
-}
-
 function gameOver() {
-  snake.length = 1
-  snake[0].x = x // initial value line 11
-  snake[0].y = y // initial value line 12
-  foodPosition = null
-  score = 0
-  direction = null
+  // restore default value
+  Snake[0].x = canvas.width / 2 - 10
+  Snake[0].y = canvas.height - 20
+  ;(score = 0), (foodPosition = null), (direction = null), (counter = 0)
   modal.style.display = 'flex'
   drawFood()
+}
+function getControls(speed) {
+  return {
+    ArrowUp: { x: 0, y: -speed },
+    ArrowDown: { x: 0, y: speed },
+    ArrowLeft: { x: -speed, y: 0 },
+    ArrowRight: { x: speed, y: 0 },
+  }
 }
 function playAgain() {
   modal.style.display = 'none'
 }
-//Game Events
+function detectCollisionFood(snakeHead, food) {
+  const distX = Math.abs(snakeHead.x + snakeHead.width / 2 - food.x)
+  const distY = Math.abs(snakeHead.y + snakeHead.height / 2 - food.y)
+  const distance = Math.sqrt(distX * distX + distY * distY)
+  return distance < snakeHead.width / 2 + radio
+}
+//<=== Game Events ===>
 window.addEventListener('keydown', ({ key }) => {
-  if (controls[key]) {
-    direction = key
-  }
+  let controls = getControls(speed)
+  if (controls[key]) direction = key
 })
 buttons.forEach((btn) => {
   btn.addEventListener('click', () => {
     let key = btn.getAttribute('name')
-    if (controls[key]) {
-      direction = key
-    }
+    let controls = getControls(speed)
+    if (controls[key]) direction = key
   })
 })
 btnAgain.addEventListener('click', () => playAgain())
-//Game Start function
+
 function startGame() {
   drawFood()
   function loopGame() {
-    moveSnake()
     drawSnake()
+    moveSnake()
     window.requestAnimationFrame(loopGame)
   }
   loopGame()
