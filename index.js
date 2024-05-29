@@ -5,28 +5,37 @@ const buttons = document.querySelectorAll('.controls button')
 const btnAgain = document.querySelector('.options button')
 const modal = document.querySelector('.modal')
 const showScore = document.querySelector('.score span')
-// canvas measures
-canvas.width = 400
-canvas.height = 500
 
+//Configure Canvas Dimensions based on Canvas size
+const updateCanvasSize = () => {
+  // Update the dimensions of Canvas dynamically
+  canvas.width = canvas.clientWidth
+  canvas.height = canvas.clientHeight
+}
+// canvas measures
+const canvasWidth = canvas.width
+const canvasHeight = canvas.height
 let score = 0
 let foodPosition = null
 let direction = undefined
 let counter = 0
-let radio = 5
-let speed = 3
+let speed = 1
+const radio = 5
+const snakeWidth = 10
+const snakeHeight = 10
 const Snake = [
   {
-    x: canvas.width / 2 - 10,
-    y: canvas.height - 20,
-    width: 10,
-    height: 10,
+    x: canvasWidth / 2 - 10,
+    y: canvasHeight - 2 * snakeHeight,
+    width: snakeWidth,
+    height: snakeHeight,
   },
 ]
 
+updateCanvasSize()
 // <== drawing functions ==>
 function drawSnake() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height)
+  ctx.clearRect(0, 0, canvasWidth, canvasHeight)
   Snake.forEach(({ x, y, width, height }, index) => {
     ctx.fillStyle = '#5bd30b'
     ctx.fillRect(x, y, width, height)
@@ -37,13 +46,13 @@ function drawSnake() {
 }
 function drawFood(x, y) {
   if (!x || !y) {
-    y = Math.floor(Math.random() * (canvas.height - 60)) + 20
-    x = Math.floor(Math.random() * (canvas.width - 40)) + 15
+    y = Math.floor(Math.random() * (canvasHeight - 60)) + 20
+    x = Math.floor(Math.random() * (canvasWidth - 40)) + 15
     foodPosition = { x, y }
   }
   ctx.fillStyle = '#14fadbd7'
   ctx.beginPath()
-  ctx.arc(x, y, 5, 0, Math.PI * 2)
+  ctx.arc(x, y, radio, 0, Math.PI * 2)
   ctx.closePath()
   ctx.fill()
 }
@@ -51,14 +60,15 @@ function drawFood(x, y) {
 function moveSnake() {
   let controls = getControls(speed)
   if (!controls[direction] || modal.style.display === 'flex') return
+  speed = handleSpeed()
   const head = { ...Snake[0] }
   head.x += controls[direction].x
   head.y += controls[direction].y
   if (
     head.x < 0 ||
-    head.x + head.width > canvas.width ||
+    head.x + snakeWidth > canvasWidth ||
     head.y < 0 ||
-    head.y + head.width >= canvas.height
+    head.y + snakeHeight >= canvasHeight
   ) {
     return gameOver()
   }
@@ -97,6 +107,14 @@ function getControls(speed) {
 function playAgain() {
   modal.style.display = 'none'
 }
+function handleSpeed() {
+  if (score === 5) speed = 2
+  if (score === 10) speed = 3
+  if (score === 15) speed = 4
+  if (score === 20) speed = 5
+  if (score === 25) speed = 6
+  return speed
+}
 function detectCollisionFood(snakeHead, food) {
   const distX = Math.abs(snakeHead.x + snakeHead.width / 2 - food.x)
   const distY = Math.abs(snakeHead.y + snakeHead.height / 2 - food.y)
@@ -105,14 +123,12 @@ function detectCollisionFood(snakeHead, food) {
 }
 //<=== Game Events ===>
 window.addEventListener('keydown', ({ key }) => {
-  let controls = getControls(speed)
-  if (controls[key]) direction = key
+  if (getControls(speed)[key]) direction = key
 })
 buttons.forEach((btn) => {
   btn.addEventListener('click', () => {
     let key = btn.getAttribute('name')
-    let controls = getControls(speed)
-    if (controls[key]) direction = key
+    if (getControls(speed)[key]) direction = key
   })
 })
 btnAgain.addEventListener('click', () => playAgain())
