@@ -19,10 +19,15 @@ let score = 0
 let foodPosition = null
 let direction = undefined
 let counter = 0
+<<<<<<< HEAD
 let speed = 1
 const radio = 5
 const snakeWidth = 10
 const snakeHeight = 10
+=======
+let radio = 5
+let speed = 1
+>>>>>>> origin/main
 const Snake = [
   {
     x: canvasWidth / 2 - 10,
